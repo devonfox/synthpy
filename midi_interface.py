@@ -1,5 +1,7 @@
 import mido
+
 # import rtmidi
+
 
 class MidiInterface:
     def __init__(self, callback) -> None:

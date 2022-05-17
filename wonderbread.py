@@ -6,14 +6,8 @@ import argparse
 
 
 def main():
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("mode", type=str, required=False)
-    # args = parser.parse_args()
     synth = Synth()
-    synth.activate()
-    while True:
-        print(synth.midi_interface.notes)
-    return
+    synth.play()
 
 
 if __name__ == "__main__":

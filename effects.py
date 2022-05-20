@@ -2,7 +2,6 @@ import numpy as np
 # from scipy.io import wavfile
 # import scipy.io
 # import wave
-import pyaudio
 
 class Effect:
     pass

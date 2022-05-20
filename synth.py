@@ -42,3 +42,5 @@ class Synth:
         if self.effect:
             data = self.effect.apply_effect(data)
         return data
+    
+

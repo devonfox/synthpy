@@ -5,7 +5,13 @@ import pyaudio
 
 
 class Synth:
+    """
+    Manages all components that comprise a synth, including the audio stream, a sound generator,
+    a midi interface, and an optional effect.
+    """
+
     def __init__(self, sound_moudle=TestModule(), effect=None) -> None:
+
         self.p = pyaudio.PyAudio()
         self.volume = 0.5  # range [0.0, 1.0]
         self.fs = 48000  # sampling rate, Hz, must be integer
@@ -21,12 +27,30 @@ class Synth:
         )
 
     def play(self):
+        """
+        Begins the audio stream, and continuously writes wave data to the output stream based
+        on midi input.
+        """
         self.stream.start_stream()
         while True:
             if self.note:
                 self.stream.write(self.output_data())
 
+    def output_data(self):
+        """
+        Applies volume and effects to final wave data
+        """
+        data = self.volume * self.sound_module.play(self.note)
+        if self.effect:
+            data = self.effect.apply_effect(data)
+        return data
+
     def process_midi(self, message):
+        """
+        Runs on another thread as a callback from the midi interface. Runs every time
+        a midi signal is recieved. Currently only handles "midi on" and "midi off".
+        If midi on, the note value is saved to the synth's note member.
+        """
         msg = message
         if msg.type == "note_on":
             # self.stream.start_stream()
@@ -36,11 +60,3 @@ class Synth:
                 # self.stream.stop_stream()
                 self.note = None
                 print(f"stop")
-
-    def output_data(self):
-        data = self.volume * self.sound_module.play(self.note)
-        if self.effect:
-            data = self.effect.apply_effect(data)
-        return data
-    
-

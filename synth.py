@@ -2,6 +2,7 @@ from midi_interface import MidiInterface
 from test_module import TestModule
 from effects import Toaster
 import pyaudio
+import time
 
 
 class Synth:
@@ -22,12 +23,15 @@ class Synth:
 
     def play(self):
         self.stream.start_stream()
+        print(self.midi_interface.inport)
         while True:
+            # print(2)
             if self.note:
                 self.stream.write(self.output_data())
 
     def process_midi(self, message):
         msg = message
+        # print(message)
         if msg.type == "note_on":
             # self.stream.start_stream()
             self.note = msg.note
@@ -36,6 +40,7 @@ class Synth:
                 # self.stream.stop_stream()
                 self.note = None
                 print(f"stop")
+        
 
     def output_data(self):
         data = self.volume * self.sound_module.play(self.note)

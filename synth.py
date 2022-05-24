@@ -25,9 +25,16 @@ class Synth:
         self.stream.start_stream()
         print(self.midi_interface.inport)
         while True:
-            # print(2)
             if self.note:
                 self.stream.write(self.output_data())
+            # for msg in self.midi_interface.inport.iter_pending():
+            #     # print(msg)
+            #     self.note = (msg.type, msg.note)
+            #     print(self.note)
+            #     if self.note[0] == "note_on":
+            #         self.stream.write(self.output_data())
+
+            # self.note = None
 
     def process_midi(self, message):
         msg = message
@@ -40,7 +47,6 @@ class Synth:
                 # self.stream.stop_stream()
                 self.note = None
                 print(f"stop")
-        
 
     def output_data(self):
         data = self.volume * self.sound_module.play(self.note)

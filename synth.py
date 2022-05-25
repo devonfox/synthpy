@@ -19,7 +19,7 @@ class SineModule:
             s += chunk
             zeros = np.zeros(chunk)
             # print(zeros)
-            chunkdata.put(zeros)
+            # chunkdata.put(zeros)
             return 0
         # fs = 48000       # sampling rate, Hz, must be integer
         f = 440 * 2**((note - 69) / 12)
@@ -95,6 +95,6 @@ class Synth:
         # time.sleep(0.00015)
         # data = chunkdata.get(block=True)
         # print(data)
-        data = np.zeros(frame_count)
+        data = np.zeros((frame_count,), dtype=np.float32)
         return (data, pyaudio.paContinue)
 

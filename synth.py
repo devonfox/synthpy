@@ -1,109 +1,55 @@
-from xml.sax import parseString
-from midi_interface import MidiInterface
+# from xml.sax import parseString
 from effects import Toaster
-import pyaudio
+from sine_module import SineModule
 import sounddevice as sd
 import numpy as np
-import queue
-import sys
+import mido
 
-chunkdata = queue.Queue(maxsize=1)
-chunk = 512  # trying to decide on a chunk for audio callback
-
-start_idx = 0
-class SineModule:
-
-    def play(self, note, s):
-        if note:
-            # print(f"play {note}: {s}")
-            pass
-        else:
-            # print(f"none: {s}")
-            pass
-            s += chunk
-            zeros = np.zeros(chunk)
-            # print(zeros)
-            # chunkdata.put(zeros)
-            return 0
-        # fs = 48000       # sampling rate, Hz, must be integer
-        f = 440 * 2**((note - 69) / 12)
-        # period = 2 * np.pi * f / fs
-
-        # do not need a duration, we want to keep creating this as long as the note is held, and
-        # then return the full samples, and stream it chunk by chunk to the audio callback, with
-        # minimal delay
-
-        # possibly change
-        t = np.linspace(s, s + chunk, False).astype(np.float32)
-        wave = np.sin(f * t * 2 * np.pi)
-        # chunkdata.put(wave)
-        # print(chunkdata)
-
-        s += chunk
-        return s
-
-    def stop(self, note):
-        print(f"stop {note}")
+# setting up default sounddevice settings
+sd.default.channels = 1
+sd.default.samplerate = 48000
 
 
 class Synth:
-    def __init__(self, sound_module=SineModule(), effect=None) -> None:
-        # self.p = pyaudio.PyAudio()
-        self.volume = 0.5  # range [0.0, 1.0]
-        self.fs = 48000  # sampling rate, Hz, must be integer
+    def __init__(self, arg, effect=None) -> None:
+        self.arg = arg
+        self.volume = arg.volume
+        self.fs = 48000
         self.midi_interface = MidiInterface(self.process_midi)
-        self.sound_module = sound_module
+        self.sound_module = SineModule(arg)
         self.effect = effect
         self.note = None
-        # self.index = 0
-        self.stream = sd.OutputStream(
-            samplerate=self.fs, channels=1, blocksize=1024, callback=sd_callback)
-
-        # self.stream = self.p.open(
-        #     format=pyaudio.paFloat32,
-        #     channels=1,
-        #     rate=self.fs,
-        #     output=True,
-        #     frames_per_buffer=chunk, # 512
-        #     stream_callback=self.pa_callback
+        self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.int16)
 
     def play(self):
-        self.stream.start()
+        self.stream.start() # start sounddevice stream
         try:
-            # print(self.midi_interface.inport)
-            num = 0
             while True:
-                pass
-                # num = self.sound_module.play(self.note, num)
-                # print(chunkdata)
+                # write to stream
+                self.stream.write(self.sound_module.play(self.note))
+
         except KeyboardInterrupt:
-            exit()
+            self.stream.stop()
+            self.stream.close()
 
     def process_midi(self, message):
         msg = message
-        # print(message)
         if msg.type == "note_on":
-            # self.stream.start_stream()
-            print(f"start")
+            # print(f"start")
             self.note = msg.note
         elif msg.type == "note_off":
             if msg.note == self.note:
-                # self.stream.stop_stream()
                 self.note = None
-                print(f"stop")
+                # print(f"stop")
 
-    # def output_data(self):
-    #     data = self.volume * self.sound_module.play(self.note)
-    #     if self.effect:
-    #         data = self.effect.apply_effect(data)
-    #     return data
+# moved midi_interface.py stuff here to consolidate
+# - we can add functionality as needed
+class MidiInterface:
+    def __init__(self, callback) -> None:
 
-def sd_callback(outdata, frame_count, time, status):
-  
-    global start_idx
-    t = (start_idx + np.arange(frame_count)) / 48000
-    t = t.reshape(-1, 1)
-    # print(len(zeros))
-    outdata[:] = 0.2 * np.sin(2 * np.pi * 440.0 * t)
-    print(start_idx)
-    start_idx += frame_count
+        # comment this out to change back to default
+        self.inport = mido.open_input(
+            'Rev2:Rev2 MIDI 1 36:0', callback=callback)
+
+        # uncomment this to change back to default
+        # self.inport = mido.open_input(callback=callback)

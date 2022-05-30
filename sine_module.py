@@ -17,7 +17,7 @@ class SineModule:
     def play(self, note):
         if note:
             f = 440 * 2**((note - 69) / 12)
-            # increment sample framces by this
+            # increment sample frames by this
             inc = 1 / (self.fs / self.arg.chunk)
             # print(f)
             if self.index < inc:  # prints note for debugging just once after key is pressed

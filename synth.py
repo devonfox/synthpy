@@ -1,6 +1,7 @@
 # from xml.sax import parseString
 from effects import Toaster
 from sine_module import SineModule
+from adsr import ADSR
 import sounddevice as sd
 import numpy as np
 import mido
@@ -18,6 +19,7 @@ class Synth:
         self.midi_interface = MidiInterface(self.process_midi)
         self.sound_module = SineModule(arg)
         self.effect = effect
+        self.adsr = ADSR()
         self.note = None
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.int16)
 
@@ -26,7 +28,7 @@ class Synth:
         try:
             while True:
                 # write to stream
-                self.stream.write(self.sound_module.play(self.note))
+                self.stream.write(self.outstream_data())
 
         except KeyboardInterrupt:
             self.stream.stop()
@@ -42,14 +44,20 @@ class Synth:
                 self.note = None
                 # print(f"stop")
 
+    def outstream_data(self):
+        data = self.sound_module.play(self.note)
+        data = self.adsr.apply_envelope(data, self.note)
+        data = self.effect.apply_effect(data) if self.effect else data
+        return data
+
 # moved midi_interface.py stuff here to consolidate
 # - we can add functionality as needed
 class MidiInterface:
     def __init__(self, callback) -> None:
 
         # comment this out to change back to default
-        self.inport = mido.open_input(
-            'Rev2:Rev2 MIDI 1 36:0', callback=callback)
+        # self.inport = mido.open_input(
+        #     'Rev2:Rev2 MIDI 1 36:0', callback=callback)
 
         # uncomment this to change back to default
-        # self.inport = mido.open_input(callback=callback)
+        self.inport = mido.open_input(callback=callback)

@@ -1,5 +1,4 @@
 from synth import Synth
-import argparse
 
 
 # possibly use sounddevice?

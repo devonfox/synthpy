@@ -2,15 +2,11 @@
 
 class ADSR:
     def __init__(self) -> None:
-        self.attack = 5
+        self.fs = 48000
+        self.attack = self.fs * 2
         self.decay = 0.25
         self.sustain = 0.25
         self.release = 0.25
-        self.previous_note = None
-        self.current_note = None
-        self.note_time = 0.0
-        self.attack_increment = 0.0
-        self.chunk_count = 1
 
     def set_attack(self, attack: float):
         self.attack = attack
@@ -24,16 +20,14 @@ class ADSR:
     def set_release(self, release):
         self.release = release
 
-    def apply_envelope(self, wave_data: list, note) -> list:
-        self.previous_note = self.current_note
-        self.current_note = note
-        if self.previous_note != self.current_note:
-            self.chunk_count = round(512 / self.attack, 0)
-            self.note_time = 0.0
-            self.attack_increment = 0.01
-        if self.note_time <= self.attack:
-            for frame in wave_data:
-                frame *= (self.note_time/self.attack)
-                self.note_time += self.chunk_count / 512
+    def apply_envelope(self, wave_data: list, samples: int) -> list:
+        if samples < self.attack:
+            wave_data = self.apply_attack(wave_data, samples)
+
+        return wave_data
+
+    def apply_attack(self, wave_data: list, samples: int) -> list:
+        for index, _ in enumerate(wave_data):
+            wave_data[index] *= (samples / self.attack)
 
         return wave_data

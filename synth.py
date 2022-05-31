@@ -1,6 +1,6 @@
 # from xml.sax import parseString
 from effects import Toaster
-from sine_module import SineModule
+from sound_module import SoundModule
 from adsr import ADSR
 import sounddevice as sd
 import numpy as np
@@ -17,7 +17,7 @@ class Synth:
         self.volume = arg.volume
         self.fs = 48000
         self.midi_interface = MidiInterface(self.process_midi)
-        self.sound_module = SineModule(arg)
+        self.sound_module = SoundModule(arg)
         self.effect = effect
         self.adsr = ADSR()
         self.note = None
@@ -46,8 +46,8 @@ class Synth:
 
     def outstream_data(self):
         data = self.sound_module.play(self.note)
-        data = self.adsr.apply_envelope(data, self.note)
-        data = self.effect.apply_effect(data) if self.effect else data
+        # data = self.adsr.apply_envelope(data, self.note)
+        # data = self.effect.apply_effect(data) if self.effect else data
         return data
 
 # moved midi_interface.py stuff here to consolidate

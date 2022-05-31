@@ -1,5 +1,3 @@
-
-
 class ADSR:
     def __init__(self) -> None:
         self.fs = 48000
@@ -28,6 +26,6 @@ class ADSR:
 
     def apply_attack(self, wave_data: list, samples: int) -> list:
         for index, _ in enumerate(wave_data):
-            wave_data[index] *= (samples / self.attack)
+            wave_data[index] *= samples / self.attack
 
         return wave_data

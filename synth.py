@@ -24,7 +24,7 @@ class Synth:
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.int16)
 
     def play(self):
-        self.stream.start() # start sounddevice stream
+        self.stream.start()  # start sounddevice stream
         try:
             while True:
                 # write to stream
@@ -49,6 +49,7 @@ class Synth:
         # data = self.adsr.apply_envelope(data, self.note)
         # data = self.effect.apply_effect(data) if self.effect else data
         return data
+
 
 # moved midi_interface.py stuff here to consolidate
 # - we can add functionality as needed

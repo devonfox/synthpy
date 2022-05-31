@@ -25,14 +25,10 @@ class SoundModule:
         self.previous_note = self.current_note
         self.current_note = note
         if note:
-            # increment sample frames by this
 
             # creates a sine chunk for just a 'chunk' of samples the size of the buffer argument
-            # wave = np.sin(f * t * 2 * np.pi)  # float calculation
-            # wave *= ii16.max * \
-            #     self.getAmp(self.arg.volume) / max(abs(wave))  # normalizing
             wave = self.calculate_wave_data()
-
+            # reset for new note
             if self.current_note != self.previous_note:
                 self.samples = 0
             wave = self.asdr.apply_envelope(wave, self.samples)
@@ -51,18 +47,18 @@ class SoundModule:
 
     # Function takes volume arguments and returns equivalent 0.0 - 1.0 ratio
     def getAmp(self, vol):
-        exp = ((-6 * (10 - vol)) / 20)
+        exp = (-6 * (10 - vol)) / 20
         amp = math.pow(10, exp)
         return amp
-    
+
     def calculate_wave_data(self):
-        f = 440 * 2**((self.current_note - 69) / 12)
-        if self.index < self.inc:  # prints note for debugging just once after key is pressed
+        f = 440 * 2 ** ((self.current_note - 69) / 12)
+        if (
+            self.index < self.inc
+        ):  # prints note for debugging just once after key is pressed
             print("Debug Note: ", self.current_note)
-        t = np.linspace(self.index, self.index +
-                        self.inc, self.arg.chunk, False)
+        t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
         wave = np.sin(f * t * 2 * np.pi)  # float calculation
-        wave *= ii16.max * \
-            self.getAmp(self.arg.volume) / max(abs(wave))  # normalizing
+        wave *= ii16.max * self.getAmp(self.arg.volume) / max(abs(wave))  # normalizing
 
         return wave

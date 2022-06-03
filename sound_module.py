@@ -3,9 +3,9 @@ import math
 from adsr import ADSR
 
 class SoundModule:
-    def __init__(self, arg, wavetype) -> None:
+    def __init__(self, arg) -> None:
 
-        self.wavetype = wavetype
+        self.wavetype = arg.wave
         self.arg = arg  # arguments from main
         self.fs = 48000
         self.index = 0
@@ -22,11 +22,7 @@ class SoundModule:
         self.previous_note = self.current_note
         self.current_note = note
         if note:
-            if self.wavetype == 1:
-                wave = self.square()
-            elif self.wavetype == 2:
-                wave = self.sine()
-            
+            wave = self.compute_wave()
             # reset for new note
             if self.current_note != self.previous_note:
                 self.samples = 1
@@ -51,25 +47,22 @@ class SoundModule:
         amp = math.pow(10, exp)
         return amp
 
-    def sine(self):
-        f = 440 * 2 ** ((self.current_note - 69) / 12)
-        if (
-            self.index < self.inc
-        ):  # prints note for debugging just once after key is pressed
-            print("Debug Note: ", self.current_note)
+    def compute_wave(self):
+        f = 440 * 2 ** ((self.current_note - 69) / 12) 
         t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
-        wave = np.sin(f * t * 2 * np.pi) * self.getAmp(self.arg.volume)  # float calculation
+        if self.wavetype == 'square':
+            wave = self.square(t, f)
+        elif self.wavetype == 'sine':
+            wave = self.sine(t, f)
+            
+        wave *= self.getAmp(self.arg.volume)  # float calculation
 
         return wave
     
-    def square(self):
-        f = 440 * 2 ** ((self.current_note - 69) / 12)
-        if (
-            self.index < self.inc
-        ):  # prints note for debugging just once after key is pressed
-            print("Debug Note: ", self.current_note)
-        t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
-        wave = 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1  # float calculation
-        wave *= self.getAmp(self.arg.volume)
+    def sine(self, t, f):
+        return np.sin(f * t * 2 * np.pi)
 
-        return wave
+
+    def square(self, t, f):
+        return 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1  # float calculation
+        

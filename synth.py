@@ -21,7 +21,7 @@ class Synth:
         self.effect = effect
         self.adsr = ADSR()
         self.note = None
-        self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.int16)
+        self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
 
     def play(self):
         self.stream.start()  # start sounddevice stream
@@ -57,8 +57,8 @@ class MidiInterface:
     def __init__(self, callback) -> None:
 
         # comment this out to change back to default
-        # self.inport = mido.open_input(
-        #     'Rev2:Rev2 MIDI 1 36:0', callback=callback)
+        self.inport = mido.open_input(
+            'Rev2:Rev2 MIDI 1 36:0', callback=callback)
 
         # uncomment this to change back to default
-        self.inport = mido.open_input(callback=callback)
+        # self.inport = mido.open_input(callback=callback)

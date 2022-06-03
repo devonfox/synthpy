@@ -2,15 +2,10 @@ import numpy as np
 import math
 from adsr import ADSR
 
-# ii16 = np.iinfo(np.int16)  # global max/min int16 values
-
-# I'm thinking it may be best to simply change this to be in the synth class
-# and then we make a math module for each type, and that just runs in so we
-# don't end up repeating a bunch of code
-
-
 class SoundModule:
-    def __init__(self, arg) -> None:
+    def __init__(self, arg, wavetype) -> None:
+
+        self.wavetype = wavetype
         self.arg = arg  # arguments from main
         self.fs = 48000
         self.index = 0
@@ -20,14 +15,18 @@ class SoundModule:
 
         self.current_note = None
         self.previous_note = None
+        
+        
 
     def play(self, note):
         self.previous_note = self.current_note
         self.current_note = note
         if note:
-
-            # creates a sine chunk for just a 'chunk' of samples the size of the buffer argument
-            wave = self.square()
+            if self.wavetype == 1:
+                wave = self.square()
+            elif self.wavetype == 2:
+                wave = self.sine()
+            
             # reset for new note
             if self.current_note != self.previous_note:
                 self.samples = 1

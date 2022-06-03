@@ -18,7 +18,7 @@ parser.add_argument('--wave', dest='wave', type=str, default='square',
 
 arg = parser.parse_args()
 
-modules = ['square', 'sine']
+modules = ['square', 'sine', 'tri']
 
 if arg.wave not in modules:
     print('Incorrect waveform type entered. see argument (--wave)')

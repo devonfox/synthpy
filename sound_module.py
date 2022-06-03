@@ -12,6 +12,9 @@ class SoundModule:
         self.samples = 1
         self.asdr = ADSR(arg)
         self.inc = self.arg.chunk / self.fs
+        self.relidx = self.asdr.release
+        self.lastnote = -1
+        self.endpoint = 0
 
         self.current_note = None
         self.previous_note = None
@@ -19,25 +22,42 @@ class SoundModule:
         
 
     def play(self, note):
-        self.previous_note = self.current_note
-        self.current_note = note
+        
         if note:
+            self.previous_note = self.current_note
+            self.current_note = note
             wave = self.compute_wave()
+            self.lastnote = note
             # reset for new note
             if self.current_note != self.previous_note:
                 self.samples = 1
+                self.endpoint = 0
+                self.relidx = self.asdr.release
             
             wave = self.asdr.apply_envelope(wave, self.samples)
 
             wave = wave.astype(np.float32)  # converts back to f32 from f64
-            self.index += self.inc  # increments current endpoint for sine calc
+            self.index += self.inc  # increments current endpoint for sine call
             self.samples += self.arg.chunk
+            self.endpoint = self.samples
+            
         else:
-            self.index = 0  # starts calc back over for sine
-            self.samples = 1
-
+            print(self.relidx)
+            if self.samples != 1 and self.relidx > 0:
+                wave = self.compute_wave()
+                wave = self.asdr.apply_release(wave, self.relidx)
+                wave = wave.astype(np.float32)  # converts back to f32 from f64
+                self.relidx -= self.arg.chunk
+                self.samples += self.arg.chunk
+                self.index += self.inc
+                
+            else:
+                self.index = 0  # starts calc back over for sine
+                self.samples = 1
+                self.endpoint = 0
+                self.relidx = self.asdr.release
             # sends chunks of silence to play call, sending silence to sounddevice
-            wave = np.zeros(self.arg.chunk).astype(np.float32)
+                wave = np.zeros(self.arg.chunk).astype(np.float32)
 
         return wave
 

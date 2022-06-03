@@ -2,7 +2,7 @@ import numpy as np
 import math
 from adsr import ADSR
 
-ii16 = np.iinfo(np.int16)  # global max/min int16 values
+# ii16 = np.iinfo(np.int16)  # global max/min int16 values
 
 # I'm thinking it may be best to simply change this to be in the synth class
 # and then we make a math module for each type, and that just runs in so we
@@ -31,9 +31,10 @@ class SoundModule:
             # reset for new note
             if self.current_note != self.previous_note:
                 self.samples = 0
+            
             wave = self.asdr.apply_envelope(wave, self.samples)
 
-            wave = wave.astype(np.int16)  # converts back to int16
+            wave = wave.astype(np.float32)  # converts back to f32 from f64
             self.index += self.inc  # increments current endpoint for sine calc
             self.samples += self.arg.chunk
         else:
@@ -41,7 +42,7 @@ class SoundModule:
             self.samples = 0
 
             # sends chunks of silence to play call, sending silence to sounddevice
-            wave = np.zeros(self.arg.chunk).astype(np.int16)
+            wave = np.zeros(self.arg.chunk).astype(np.float32)
 
         return wave
 
@@ -58,7 +59,7 @@ class SoundModule:
         ):  # prints note for debugging just once after key is pressed
             print("Debug Note: ", self.current_note)
         t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
-        wave = np.sin(f * t * 2 * np.pi)  # float calculation
-        wave *= ii16.max * self.getAmp(self.arg.volume) / max(abs(wave))  # normalizing
+        wave = np.sin(f * t * 2 * np.pi) * self.getAmp(self.arg.volume)  # float calculation
+        # wave *= ff32.max * self.getAmp(self.arg.volume) / max(abs(wave))  # normalizing
 
         return wave

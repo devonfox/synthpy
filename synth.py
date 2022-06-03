@@ -19,7 +19,7 @@ class Synth:
         self.midi_interface = MidiInterface(self.process_midi)
         self.sound_module = SoundModule(arg)
         self.effect = effect
-        self.adsr = ADSR()
+        # self.adsr = ADSR(arg)
         self.note = None
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
 

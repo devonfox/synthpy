@@ -14,9 +14,9 @@ class SoundModule:
         self.arg = arg  # arguments from main
         self.fs = 48000
         self.index = 0
-        self.samples = 0
-        self.asdr = ADSR()
-        self.inc = 1 / (self.fs / self.arg.chunk)
+        self.samples = 1
+        self.asdr = ADSR(arg)
+        self.inc = self.arg.chunk / self.fs
 
         self.current_note = None
         self.previous_note = None
@@ -27,10 +27,10 @@ class SoundModule:
         if note:
 
             # creates a sine chunk for just a 'chunk' of samples the size of the buffer argument
-            wave = self.calculate_wave_data()
+            wave = self.square()
             # reset for new note
             if self.current_note != self.previous_note:
-                self.samples = 0
+                self.samples = 1
             
             wave = self.asdr.apply_envelope(wave, self.samples)
 
@@ -39,7 +39,7 @@ class SoundModule:
             self.samples += self.arg.chunk
         else:
             self.index = 0  # starts calc back over for sine
-            self.samples = 0
+            self.samples = 1
 
             # sends chunks of silence to play call, sending silence to sounddevice
             wave = np.zeros(self.arg.chunk).astype(np.float32)
@@ -52,7 +52,7 @@ class SoundModule:
         amp = math.pow(10, exp)
         return amp
 
-    def calculate_wave_data(self):
+    def sine(self):
         f = 440 * 2 ** ((self.current_note - 69) / 12)
         if (
             self.index < self.inc
@@ -60,6 +60,17 @@ class SoundModule:
             print("Debug Note: ", self.current_note)
         t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
         wave = np.sin(f * t * 2 * np.pi) * self.getAmp(self.arg.volume)  # float calculation
-        # wave *= ff32.max * self.getAmp(self.arg.volume) / max(abs(wave))  # normalizing
+
+        return wave
+    
+    def square(self):
+        f = 440 * 2 ** ((self.current_note - 69) / 12)
+        if (
+            self.index < self.inc
+        ):  # prints note for debugging just once after key is pressed
+            print("Debug Note: ", self.current_note)
+        t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
+        wave = 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1  # float calculation
+        wave *= self.getAmp(self.arg.volume)
 
         return wave

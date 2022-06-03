@@ -16,16 +16,14 @@ parser.add_argument('--wave', dest='wave', type=str, default='square',
 
 arg = parser.parse_args()
 
-if arg.wave == 'square':
-    wavetype = 1
-elif arg.wave == 'sine':
-    wavetype = 2
-else:
+modules = ['square', 'sine']
+
+if arg.wave not in modules:
     print('Incorrect waveform type entered. see argument (--wave)')
     exit()
 
 def main():
-    synth = Synth(arg, wavetype)
+    synth = Synth(arg)
     synth.play()
 
 

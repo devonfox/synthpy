@@ -12,14 +12,13 @@ sd.default.samplerate = 48000
 
 
 class Synth:
-    def __init__(self, arg, effect=None) -> None:
+    def __init__(self, arg, wavetype, effect=None) -> None:
         self.arg = arg
         self.volume = arg.volume
         self.fs = 48000
         self.midi_interface = MidiInterface(self.process_midi)
-        self.sound_module = SoundModule(arg)
+        self.sound_module = SoundModule(arg, wavetype)
         self.effect = effect
-        # self.adsr = ADSR(arg)
         self.note = None
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
 

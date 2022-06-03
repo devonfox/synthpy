@@ -7,6 +7,7 @@ class ADSR:
         self.decay = 0.25
         self.sustain = 0.25
         self.release = self.fs * arg.release
+        self.level = 1.0
         self.arg = arg
 
     def set_attack(self, attack: float):
@@ -31,7 +32,8 @@ class ADSR:
     def apply_attack(self, wave_data: list, samples: int) -> list:
         for index, _ in enumerate(wave_data):
 
-            wave_data[index] *= ((samples+index+1)/self.attack)
+            wave_data[index] *= ((samples+index)/self.attack)
+            self.level = ((samples+index)/self.attack)
 
         return wave_data
 

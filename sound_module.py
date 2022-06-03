@@ -32,28 +32,23 @@ class SoundModule:
             # reset for new note
             if self.current_note != self.previous_note:
                 self.samples = 0
-                # self.endpoint = 0
-                # self.relidx = self.asdr.release
+                self.relidx = self.asdr.release
+                self.relswitch = False
             
             wave = self.asdr.apply_envelope(wave, self.samples)
 
             wave = wave.astype(np.float32)  # converts back to f32 from f64
             self.index += self.inc  # increments current endpoint for sine call
             self.samples += self.arg.chunk
-            # self.endpoint = self.samples
-            # if self.samples < self.asdr.attack:
-            #     self.relidx = self.samples
-            # else:
-            #     self.relidx = self.asdr.release
-            # print(self.relidx)
+    
             
         else:
             
-            # print(self.relidx)
+            print(self.relidx)
             if self.samples > 0 and self.relidx >= 0:
                 if self.relswitch is False:
-                    if self.samples < self.asdr.attack:
-                        self.relidx = self.samples
+                    # if self.samples < self.asdr.attack:
+                    #     self.relidx = self.samples
                     self.relswitch = True
                 wave = self.compute_wave()
                 wave = self.asdr.apply_release(wave, self.relidx)
@@ -68,6 +63,7 @@ class SoundModule:
                 # self.endpoint = 0
                 self.relidx = self.asdr.release
                 self.relswitch = False
+                self.asdr.level = 1.0
             # sends chunks of silence to play call, sending silence to sounddevice
                 wave = np.zeros(self.arg.chunk).astype(np.float32)
 
@@ -88,8 +84,12 @@ class SoundModule:
             wave = self.sine(t, f)
         elif self.wavetype == 'tri':
             wave = self.triangle(t, f)
-            
-        wave *= self.getAmp(self.arg.volume)
+        
+        if self.relswitch is True:
+            wave *= self.getAmp(self.arg.volume)
+            wave *= self.asdr.level
+        else:
+            wave *= self.getAmp(self.arg.volume)
 
         return wave
     

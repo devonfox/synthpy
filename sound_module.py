@@ -1,7 +1,6 @@
 import numpy as np
 import math
 from adsr import ADSR
-from scipy import signal
 
 class SoundModule:
     def __init__(self, arg) -> None:
@@ -13,13 +12,11 @@ class SoundModule:
         self.samples = 0
         self.asdr = ADSR(arg)
         self.inc = self.arg.chunk / self.fs
-        self.attidx = 0
         self.relidx = self.asdr.release
         self.relswitch = False
-        # self.endpoint = 0
 
-        self.current_note = None
-        self.previous_note = None
+        self.current_note = (0, 0)
+        self.previous_note = (0,0)
         
         
 
@@ -30,9 +27,10 @@ class SoundModule:
             self.current_note = note
             wave = self.compute_wave()
             # reset for new note
-            if self.current_note != self.previous_note:
+            if self.current_note[0] != self.previous_note[0] or self.current_note[1] != self.previous_note[1]:
                 self.samples = 0
                 self.relidx = self.asdr.release
+                self.index = 0
                 self.relswitch = False
             
             wave = self.asdr.apply_envelope(wave, self.samples)
@@ -47,8 +45,6 @@ class SoundModule:
             print(self.relidx)
             if self.samples > 0 and self.relidx >= 0:
                 if self.relswitch is False:
-                    # if self.samples < self.asdr.attack:
-                    #     self.relidx = self.samples
                     self.relswitch = True
                 wave = self.compute_wave()
                 wave = self.asdr.apply_release(wave, self.relidx)
@@ -58,11 +54,12 @@ class SoundModule:
                 self.index += self.inc
                 
             else:
+                if self.relswitch is True:
+                    wave = self.round()
+                self.relswitch = False
                 self.index = 0  # starts calc back over for sine
                 self.samples = 0
-                # self.endpoint = 0
                 self.relidx = self.asdr.release
-                self.relswitch = False
                 self.asdr.level = 1.0
             # sends chunks of silence to play call, sending silence to sounddevice
                 wave = np.zeros(self.arg.chunk).astype(np.float32)
@@ -76,7 +73,7 @@ class SoundModule:
         return amp
 
     def compute_wave(self):
-        f = 440 * 2 ** ((self.current_note - 69) / 12) 
+        f = 440 * 2 ** ((self.current_note[0] - 69) / 12) 
         t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
         if self.wavetype == 'square':
             wave = self.square(t, f)
@@ -92,6 +89,16 @@ class SoundModule:
             wave *= self.getAmp(self.arg.volume)
 
         return wave
+    
+    def round(self):
+        wave = self.compute_wave()
+        length = len(wave)
+        for index, _ in enumerate(wave):
+            wave[index] *= self.getAmp(10 * ((length - index) / length))
+        wave = wave.astype(np.float32)
+
+        return wave
+
     
     def sine(self, t, f):
         return np.sin(f * t * 2 * np.pi)

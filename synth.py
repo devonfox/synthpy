@@ -21,34 +21,30 @@ class Synth:
         self.effect = effect
         self.note = None
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
+        self.id = 0
 
     def play(self):
         self.stream.start()  # start sounddevice stream
         try:
             while True:
                 # write to stream
-                self.stream.write(self.outstream_data())
+                self.stream.write(self.sound_module.play(self.note))
 
         except KeyboardInterrupt:
             self.stream.stop()
             self.stream.close()
 
     def process_midi(self, message):
+        self.id += 1
         msg = message
         if msg.type == "note_on":
             # print(f"start")
-            self.note = msg.note
+            self.note = (msg.note, self.id)
         elif msg.type == "note_off":
-            if msg.note == self.note:
-                self.note = None
-                # print(f"stop")
-
-    def outstream_data(self):
-        data = self.sound_module.play(self.note)
-        # data = self.adsr.apply_envelope(data, self.note)
-        # data = self.effect.apply_effect(data) if self.effect else data
-        return data
-
+            if self.note:
+                if msg.note == self.note[0]:
+                    self.note = None
+                    # print(f"stop")
 
 # moved midi_interface.py stuff here to consolidate
 # - we can add functionality as needed

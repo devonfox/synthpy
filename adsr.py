@@ -24,7 +24,7 @@ class ADSR:
     
     def apply_envelope(self, wave_data: list, samples: int) -> list:
 
-        if samples <= self.attack:
+        if samples < self.attack:
             wave_data = self.apply_attack(wave_data, samples)
 
         return wave_data
@@ -32,8 +32,8 @@ class ADSR:
     def apply_attack(self, wave_data: list, samples: int) -> list:
         for index, _ in enumerate(wave_data):
 
-            wave_data[index] *= ((samples+index)/self.attack)
-            self.level = ((samples+index)/self.attack)
+            wave_data[index] *= ((samples+index+1)/self.attack)
+            self.level = ((samples+index+1)/self.attack)
 
         return wave_data
 

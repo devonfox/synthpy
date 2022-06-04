@@ -19,37 +19,32 @@ class Synth:
         self.midi_interface = MidiInterface(self.process_midi)
         self.sound_module = SoundModule(arg)
         self.effect = effect
-        self.adsr = ADSR()
         self.note = None
-        self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.int16)
+        self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
+        self.id = 0
 
     def play(self):
         self.stream.start()  # start sounddevice stream
         try:
             while True:
                 # write to stream
-                self.stream.write(self.outstream_data())
+                self.stream.write(self.sound_module.play(self.note))
 
         except KeyboardInterrupt:
             self.stream.stop()
             self.stream.close()
 
     def process_midi(self, message):
+        self.id += 1
         msg = message
         if msg.type == "note_on":
             # print(f"start")
-            self.note = msg.note
+            self.note = (msg.note, self.id)
         elif msg.type == "note_off":
-            if msg.note == self.note:
-                self.note = None
-                # print(f"stop")
-
-    def outstream_data(self):
-        data = self.sound_module.play(self.note)
-        # data = self.adsr.apply_envelope(data, self.note)
-        # data = self.effect.apply_effect(data) if self.effect else data
-        return data
-
+            if self.note:
+                if msg.note == self.note[0]:
+                    self.note = None
+                    # print(f"stop")
 
 # moved midi_interface.py stuff here to consolidate
 # - we can add functionality as needed
@@ -57,8 +52,8 @@ class MidiInterface:
     def __init__(self, callback) -> None:
 
         # comment this out to change back to default
-        # self.inport = mido.open_input(
-        #     'Rev2:Rev2 MIDI 1 36:0', callback=callback)
+        self.inport = mido.open_input(
+            'Rev2:Rev2 MIDI 1 36:0', callback=callback)
 
         # uncomment this to change back to default
-        self.inport = mido.open_input(callback=callback)
+        # self.inport = mido.open_input(callback=callback)

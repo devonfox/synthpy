@@ -2,46 +2,67 @@ import numpy as np
 import math
 from adsr import ADSR
 
-ii16 = np.iinfo(np.int16)  # global max/min int16 values
-
-# I'm thinking it may be best to simply change this to be in the synth class
-# and then we make a math module for each type, and that just runs in so we
-# don't end up repeating a bunch of code
-
-
 class SoundModule:
     def __init__(self, arg) -> None:
+
+        self.wavetype = arg.wave
         self.arg = arg  # arguments from main
         self.fs = 48000
         self.index = 0
         self.samples = 0
-        self.asdr = ADSR()
-        self.inc = 1 / (self.fs / self.arg.chunk)
+        self.asdr = ADSR(arg)
+        self.inc = self.arg.chunk / self.fs
+        self.relidx = self.asdr.release
+        self.relswitch = False
 
-        self.current_note = None
-        self.previous_note = None
+        self.current_note = (0, 0)
+        self.previous_note = (0,0)
+        
+        
 
     def play(self, note):
-        self.previous_note = self.current_note
-        self.current_note = note
+        
         if note:
-
-            # creates a sine chunk for just a 'chunk' of samples the size of the buffer argument
-            wave = self.calculate_wave_data()
+            self.previous_note = self.current_note
+            self.current_note = note
+            wave = self.compute_wave()
             # reset for new note
-            if self.current_note != self.previous_note:
+            if self.current_note[0] != self.previous_note[0] or self.current_note[1] != self.previous_note[1]:
                 self.samples = 0
+                self.relidx = self.asdr.release
+                self.index = 0
+                self.relswitch = False
+            
             wave = self.asdr.apply_envelope(wave, self.samples)
 
-            wave = wave.astype(np.int16)  # converts back to int16
-            self.index += self.inc  # increments current endpoint for sine calc
+            wave = wave.astype(np.float32)  # converts back to f32 from f64
+            self.index += self.inc  # increments current endpoint for sine call
             self.samples += self.arg.chunk
+    
+            
         else:
-            self.index = 0  # starts calc back over for sine
-            self.samples = 0
-
+            
+            print(self.relidx)
+            if self.samples > 0 and self.relidx >= 0:
+                if self.relswitch is False:
+                    self.relswitch = True
+                wave = self.compute_wave()
+                wave = self.asdr.apply_release(wave, self.relidx)
+                wave = wave.astype(np.float32)  # converts back to f32 from f64
+                self.relidx -= self.arg.chunk
+                self.samples += self.arg.chunk
+                self.index += self.inc
+                
+            else:
+                if self.relswitch is True:
+                    wave = self.round()
+                self.relswitch = False
+                self.index = 0  # starts calc back over for sine
+                self.samples = 0
+                self.relidx = self.asdr.release
+                self.asdr.level = 1.0
             # sends chunks of silence to play call, sending silence to sounddevice
-            wave = np.zeros(self.arg.chunk).astype(np.int16)
+                wave = np.zeros(self.arg.chunk).astype(np.float32)
 
         return wave
 
@@ -51,14 +72,40 @@ class SoundModule:
         amp = math.pow(10, exp)
         return amp
 
-    def calculate_wave_data(self):
-        f = 440 * 2 ** ((self.current_note - 69) / 12)
-        if (
-            self.index < self.inc
-        ):  # prints note for debugging just once after key is pressed
-            print("Debug Note: ", self.current_note)
+    def compute_wave(self):
+        f = 440 * 2 ** ((self.current_note[0] - 69) / 12) 
         t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
-        wave = np.sin(f * t * 2 * np.pi)  # float calculation
-        wave *= ii16.max * self.getAmp(self.arg.volume) / max(abs(wave))  # normalizing
+        if self.wavetype == 'square':
+            wave = self.square(t, f)
+        elif self.wavetype == 'sine':
+            wave = self.sine(t, f)
+        elif self.wavetype == 'tri':
+            wave = self.triangle(t, f)
+        
+        if self.relswitch is True:
+            wave *= self.getAmp(self.arg.volume)
+            wave *= self.asdr.level
+        else:
+            wave *= self.getAmp(self.arg.volume)
 
         return wave
+    
+    def round(self):
+        wave = self.compute_wave()
+        length = len(wave)
+        for index, _ in enumerate(wave):
+            wave[index] *= self.getAmp(10 * ((length - index) / length))
+        wave = wave.astype(np.float32)
+
+        return wave
+
+    
+    def sine(self, t, f):
+        return np.sin(f * t * 2 * np.pi)
+
+
+    def square(self, t, f):
+        return 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1  # float calculation
+        
+    def triangle(self, t, f):
+        return 2 * np.abs(2 * (t/f) - np.floor((t/f) + 0.5)) - 1

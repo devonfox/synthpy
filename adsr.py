@@ -16,17 +16,18 @@ class ADSR:
     def set_decay(self, decay: float):
         self.decay = decay
 
-    def set_sustain(self, sustain):
+    def set_sustain(self, sustain): # todo Sunday
         self.sustain = sustain
 
-    def set_release(self, release):
+    def set_release(self, release): # todo Sunday
         self.release = release
 
     def apply_envelope(self, wave_data: list, samples: int, note) -> list:
 
         if samples < self.attack:
             wave_data = self.apply_attack(wave_data, samples, note)
-
+        # add decay
+        # then add sustain
         return wave_data
 
     def apply_attack(self, wave_data: list, samples: int, note) -> list:

@@ -72,8 +72,8 @@ class SoundModule:
             wave = self.square(t, f)
         elif self.wavetype == 'sine':
             wave = self.sine(t, f)
-        elif self.wavetype == 'tri':
-            wave = self.triangle(t, f)
+        # elif self.wavetype == 'tri':
+        #     wave = self.triangle(t, f)
 
         if note.relswitch is True:
             wave *= self.getAmp(self.arg.volume)
@@ -100,8 +100,8 @@ class SoundModule:
         # float calculation
         return 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1
 
-    def triangle(self, t, f):
-        return 2 * np.abs(2 * (t/f) - np.floor((t/f) + 0.5)) - 1
+    # def triangle(self, t, f):
+    #     return 2 * np.abs(2 * (t/f) - np.floor((t/f) + 0.5)) - 1
 
 
 class Note:

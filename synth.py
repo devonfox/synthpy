@@ -15,7 +15,7 @@ class Synth:
         self.arg = arg
         self.volume = arg.volume
         self.fs = 48000
-        self.midi_interface = MidiInterface(self.process_midi)
+        self.midi_interface = MidiInterface(self.process_midi, arg)
         self.sound_module = SoundModule(arg)
         self.effect = effect
         self.note = None
@@ -36,7 +36,7 @@ class Synth:
     def poly(self):
         poly = np.zeros(self.arg.chunk).astype(np.float32)
         active = sum(map(lambda x: x.state != False, self.notes))
-        print(active)
+        # print(active)
 
         for note in self.notes:
             poly += self.sound_module.play(note)
@@ -56,11 +56,15 @@ class Synth:
 # moved midi_interface.py stuff here to consolidate
 # - we can add functionality as needed
 class MidiInterface:
-    def __init__(self, callback) -> None:
+    
 
+
+
+    def __init__(self, callback, arg) -> None:
+        self.ports = mido.get_output_names()
         # comment this out to change back to default
         self.inport = mido.open_input(
-            'Rev2:Rev2 MIDI 1 36:0', callback=callback)
+            self.ports[arg.port], callback=callback)
 
         # uncomment this to change back to default
         # self.inport = mido.open_input(callback=callback)

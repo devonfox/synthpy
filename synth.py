@@ -32,7 +32,7 @@ class Synth:
         except KeyboardInterrupt:
             self.stream.stop()
             self.stream.close()
-    
+
     def poly(self):
         poly = np.zeros(self.arg.chunk).astype(np.float32)
         active = sum(map(lambda x: x.state != False, self.notes))
@@ -64,4 +64,3 @@ class MidiInterface:
 
         # uncomment this to change back to default
         # self.inport = mido.open_input(callback=callback)
-

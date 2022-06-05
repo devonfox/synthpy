@@ -1,5 +1,6 @@
 import math
 
+
 class ADSR:
     def __init__(self, arg) -> None:
         self.fs = 48000
@@ -20,7 +21,7 @@ class ADSR:
 
     def set_release(self, release):
         self.release = release
-    
+
     def apply_envelope(self, wave_data: list, samples: int, note) -> list:
 
         if samples < self.attack:
@@ -39,5 +40,5 @@ class ADSR:
     def apply_release(self, wave_data: list, rel: int) -> list:
         for index, _ in enumerate(wave_data):
             wave_data[index] *= ((rel - index) / self.release)
-        
+
         return wave_data

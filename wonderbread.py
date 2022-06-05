@@ -18,7 +18,6 @@ parser.add_argument('--voice', dest='voice', type=int, default=8,
                     help='synth waveform module (default: 8)')
 
 
-
 arg = parser.parse_args()
 
 modules = ['square', 'sine', 'tri']
@@ -26,6 +25,7 @@ modules = ['square', 'sine', 'tri']
 if arg.wave not in modules:
     print('Incorrect waveform type entered. see argument (--wave)')
     exit()
+
 
 def main():
     synth = Synth(arg)

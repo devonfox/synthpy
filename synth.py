@@ -68,3 +68,4 @@ class MidiInterface:
 
         # uncomment this to change back to default
         # self.inport = mido.open_input(callback=callback)
+    

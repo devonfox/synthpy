@@ -52,20 +52,10 @@ class Synth:
         elif msg.type == "note_off":
             self.notes[msg.note].state = False
 
-
-# moved midi_interface.py stuff here to consolidate
-# - we can add functionality as needed
 class MidiInterface:
     
-
-
-
     def __init__(self, callback, arg) -> None:
         self.ports = mido.get_output_names()
-        # comment this out to change back to default
         self.inport = mido.open_input(
             self.ports[arg.port], callback=callback)
 
-        # uncomment this to change back to default
-        # self.inport = mido.open_input(callback=callback)
-    

@@ -74,7 +74,7 @@ Ex. `--port 0`
 * select which midi port to receive from (Default: 0)
 
 Ex. `--portlist False`
-* list all available midi ports, and select which one to connect to at startup - port can be used instead if you already know portnumber or want to startup headlessly (Default: False)
+* list all available midi ports, and select which one to connect to at startup - `--port` can be used instead if you already know portnumber or want to startup headlessly (Default: False)
 
 Ex. `--effect toaster`
 * enable the toaster effect
@@ -89,7 +89,7 @@ With that in mind, we set up our project in a modular fashion: the initial desig
 
 As development progressed, we were able to implement polyphony, and even enabled support for sustain pedals. This required some changes to our initial design, however. A Note class was added to allow for tracking the state of notes; this helped with the implementation of release as well.
 
-The end result is Wonderbread, a polyphonic synth with ADSR (and sustain pedal support), two wave types (sine and square), and a distortion effect called "Toaster".
+The end result is Wonderbread, a polyphonic synth with Amp ADSR (and sustain pedal support), two wave types (sine and square), and a distortion effect called "Toaster".
 
 ###  How It Went
 
@@ -98,6 +98,8 @@ Implementing a midi interface was straightforward at first, as the mido library 
 One of the first hurdles was changing how we implemented our midi interface. The initial implementation used a callback and only wrote midi data to stream when a note was played; we soon discovered the flaws of this approach, and as a result we had to change our design so that data was constantly being written to the stream. To fix our issue, when no notes are being played, we simply write empty data out.
 
 We also encountered a good deal of friction working with the pyaudio library, so much so that we eventually ditched it in favor of the sounddevice library. Once this was implemented, we had no issues with writing to stream on any of the three platforms we were developing for.
+
+One challenging aspect of dealing with midi with setting a note's state.  We have to keep track of the amount of samples passed, how long each part of the ASDR (sustain level and making sure we don't pass it), and keep track of when the release starts, and if it's still active.  Once we got this working, and the monosynth was finished and smooth with square, we rewrote the Note class to contain state information about each note. The mido midi callback could appropriate update state for each note, and we had a whole bunch of trouble getting this to work with each note, but we rewrote to have an array hold this state info for each note (index) and when a control change from sustain was entered, we could update state and hold the notes being held.  When we let go of the pedal it initiates release for all notes being held.  Cool!  Polyphony was easy enough once we could manage individual note state, and simply sum the resulting waveforms, and dividing to keep from clipping. 
 
 Work on effects modules wound up being a bit too much to handle. Unsurprisingly, interesting audio effects are hard to develop. Ultimately, we were only able to implement one effect, the "Toaster"; this was born of a failed attempt at an echo effect. The result is a blown out sound that sounds like you left your wonderbread in the oven for a bit too long. 
 

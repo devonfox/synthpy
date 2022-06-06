@@ -81,17 +81,17 @@ Ex. `--effect toaster`
 
 ### What Went Down
 
-The intial plan was to implement a monosynth with ADSR, multiple wave types, and some audio effects. With time permitting, we would implement polyphony, and any other interesting features we felt we could manage. We chose to use python due to the audio libraries available for it, and because we felt it would be the easiet for the two of us to work with.
+The initial plan was to implement a monosynth with ADSR, multiple wave types, and some audio effects. With time permitting, we would implement polyphony, and any other interesting features we felt we could manage. We chose to use python due to the audio libraries available for it, and because we felt it would be the easiest for the two of us to work with.
 
-With that in mind, we set up our project in a modular fashion: the intial design utilized a synth class which would manage the various components of our synth, including a sound module class, an effects module class, and an envelope generator class. Additionally, the synth class handles the audio stream. We aimed for modularity to make adding and removing different components easy while we were developing the synth, and to ensure we could easily extend our synth in the future.
+With that in mind, we set up our project in a modular fashion: the initial design utilized a synth class which would manage the various components of our synth, including a sound module class, an effects module class, and an envelope generator class. Additionally, the synth class handles the audio stream. We aimed for modularity to make adding and removing different components easy while we were developing the synth, and to ensure we could easily extend our synth in the future.
 
-As development progressed, we were able to implement polyphony, and even enabled support for sustain pedals. This required some changes to our intial design, however. A Note class was added to allow for tracking the state of notes; this helped with the implementation of release as well.
+As development progressed, we were able to implement polyphony, and even enabled support for sustain pedals. This required some changes to our initial design, however. A Note class was added to allow for tracking the state of notes; this helped with the implementation of release as well.
 
 The end result is Wonderbread, a polyphonic synth with ADSR (and sustain pedal support), two wave types (sine and square), and a distortion effect called "Toaster".
 
 ###  How It Went
 
-Implementing a midi interface was straightforward at first, as the mido library made it very easy to recieve and parse midi data. Once the midi interface was implemented, it wasn't long before we were able to have a simple, playable monosynth. Of course, there was still a lot left to do.
+Implementing a midi interface was straightforward at first, as the mido library made it very easy to receive and parse midi data. Once the midi interface was implemented, it wasn't long before we were able to have a simple, playable monosynth. Of course, there was still a lot left to do.
 
 One of the first hurdles was changing how we implemented our midi interface. The initial implementation used a callback and only wrote midi data to stream when a note was played; we soon discovered the flaws of this approach, and as a result we had to change our design so that data was constantly being written to the stream. To fix our issue, when no notes are being played, we simply write empty data out.
 

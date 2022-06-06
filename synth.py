@@ -18,7 +18,6 @@ class Synth:
         self.midi_interface = MidiInterface(self.process_midi, arg)
         self.sound_module = SoundModule(arg)
         self.effect = effect
-        self.note = None
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
         self.notes = [Note(i, arg) for i in range(0, 128)]
 
@@ -47,10 +46,23 @@ class Synth:
 
     def process_midi(self, message):
         msg = message
-        if msg.type == "note_on":
-            self.notes[msg.note].state = True
-        elif msg.type == "note_off":
-            self.notes[msg.note].state = False
+        if msg.is_cc():
+            if msg.control == 64:
+                if msg.value == 127:
+                    self.sound_module.hold = True
+                    for note in self.notes:
+                        if note.state:
+                            note.holdstate = True
+                elif msg.value == 0:
+                    self.sound_module.hold = False
+                    for note in self.notes:
+                        if not note.state:
+                            note.holdstate = False
+        else:
+            if msg.type == "note_on":
+                self.notes[msg.note].state = True
+            elif msg.type == "note_off":
+                self.notes[msg.note].state = False
 
 class MidiInterface:
     

@@ -1,7 +1,6 @@
 
 from synth import Synth
 import argparse
-import mido
 
 parser = argparse.ArgumentParser()
 
@@ -23,6 +22,8 @@ parser.add_argument('--port', dest='port', type=int, default=0,
                     help='select midi port (default: 0)')
 parser.add_argument('--portlist', dest='portlist', type=bool, default=False,
                     help='list ports and select from list (default: False)')
+parser.add_argument('--effect', dest='effect', type=str, default=None,
+                    help='effect type (default: None)')
 # parser.add_argument('--voice', dest='voice', type=int, default=8,
 #                     help='voice count (default: 8)')
 

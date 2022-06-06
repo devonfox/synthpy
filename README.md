@@ -4,7 +4,7 @@ CS410P - Music, Sound, and Computers
 
 *Devon Fox and Matt Stevenson 2022*
 
-### Mac/Linux Build Instructions
+### Mac/Linux/Windows Build Instructions
 
 Make sure the latest version of Python is installed.
 
@@ -14,7 +14,7 @@ Make sure the latest version of Python is installed.
 
 2. Then make sure the ALSA development dependencies are installed:
 
-*MAC USERS: can skip this step*
+*MAC/WINDOWS USERS: can skip this step*
 
 `sudo apt-get install -y python3-dev libasound2-dev`
 
@@ -33,6 +33,14 @@ Make sure the latest version of Python is installed.
 6. Install Python-rtmidi for use of midi ports
 
 `pip install python-rtmidi`
+
+
+### Winodws Build Instructions
+
+In addition to the above, windows users will need a midi loopback tool in order to connect a midi keyboard to the synth. The one provided below works well and is free:
+
+loopMidi: https://www.tobias-erichsen.de/software/loopmidi.html
+
 
 To run the program, in the same directory, type the following in the terminal:
 
@@ -66,6 +74,9 @@ Ex. `--port 0`
 Ex. `--portlist False`
 * list all available midi ports, and select which one to connect to at startup - port can be used instead if you already know portnumber or want to startup headlessly (Default: False)
 
+Ex. `--effect toaster`
+* enable the toaster effect
+
 *to note: sustain will be held if using a sustain pedal via midi*
 
 ### What Went Down
@@ -74,4 +85,8 @@ Ex. `--portlist False`
 
 ###  How It Went
 
-*todo!*
+Implementing a midi interface was straightforward, as the mido library made it very easy to recieve and parse midi data. Once the midi interface was implemented, it wasn't long before we were able to have a playable monosynth. Of course, there was still a lot left to do.
+
+Work on effects modules wound up being a bit too much to handle. Unsurprisingly, interesting audio effects are hard to develop. Ultimately, we were only able to implement one effect, the "Toaster"; this was born of a failed attempt at an echo effect. The result is a blown out sound that sounds like you left your wonderbread in the oven for a bit too long. 
+
+The effects module was designed to be easily extensible, though, so perhaps in the future we will be able to continue development and get some common effects like reverb or delay implemented.

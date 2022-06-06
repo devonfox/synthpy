@@ -14,7 +14,6 @@ class SoundModule:
         self.hold = False
 
     def play(self, note):
-        # print(self.hold)
 
         if note.state == True or note.holdstate == True:
             wave = self.compute_wave(note)
@@ -35,7 +34,6 @@ class SoundModule:
 
         else:
 
-            # print(f"Note: {note.key} -> Relidx: {note.relidx}")
             if note.samples > 0 and note.relidx >= 0:
                 note.active = True
                 if note.relswitch is False:

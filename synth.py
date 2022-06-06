@@ -1,4 +1,4 @@
-from effects import Toaster
+from effects import Effect
 from sound_module import SoundModule, Note
 import sounddevice as sd
 import numpy as np
@@ -16,7 +16,7 @@ class Synth:
         self.fs = 48000
         self.midi_interface = MidiInterface(self.process_midi, arg)
         self.sound_module = SoundModule(arg)
-        self.effect = effect
+        self.effect = Effect(arg)
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
         self.notes = [Note(i, arg) for i in range(0, 128)]
 
@@ -38,7 +38,7 @@ class Synth:
         # print(active)
 
         for note in self.notes:
-            poly += self.sound_module.play(note)
+            poly += self.effect.apply_effect(self.sound_module.play(note))
         if active:
             for sample in poly:
                 sample /= active
@@ -93,5 +93,6 @@ class MidiInterface:
             self.inport = mido.open_input(
                 self.ports[port], callback=callback)
         else:
-            self.inport = mido.open_input(
-                self.ports[arg.port], callback=callback)
+            self.inport = mido.open_input(callback=callback)
+            # self.inport = mido.open_input(
+            #     self.ports[arg.port], callback=callback)

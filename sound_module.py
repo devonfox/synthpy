@@ -2,65 +2,61 @@ import numpy as np
 import math
 from adsr import ADSR
 
+
 class SoundModule:
     def __init__(self, arg) -> None:
 
         self.wavetype = arg.wave
         self.arg = arg  # arguments from main
         self.fs = 48000
-        self.index = 0
-        self.samples = 0
         self.asdr = ADSR(arg)
         self.inc = self.arg.chunk / self.fs
-        self.relidx = self.asdr.release
-        self.relswitch = False
-
-        self.current_note = (0, 0)
-        self.previous_note = (0,0)
-        
-        
+        self.hold = False
 
     def play(self, note):
-        
-        if note:
-            self.previous_note = self.current_note
-            self.current_note = note
-            wave = self.compute_wave()
-            # reset for new note
-            if self.current_note[0] != self.previous_note[0] or self.current_note[1] != self.previous_note[1]:
-                self.samples = 0
-                self.relidx = self.asdr.release
-                self.index = 0
-                self.relswitch = False
-            
-            wave = self.asdr.apply_envelope(wave, self.samples)
+        # print(self.hold)
 
+        if note.state == True or note.holdstate == True:
+            wave = self.compute_wave(note)
+
+            if note.active == True:
+                note.samples = 0
+                note.relidx = self.asdr.release
+                note.index = 0
+                note.relswitch = False
+                note.active = False
+                note.declevel = 1.0
+                note.level = 1.0
+
+            wave = self.asdr.apply_envelope(wave, note.samples, note)
             wave = wave.astype(np.float32)  # converts back to f32 from f64
-            self.index += self.inc  # increments current endpoint for sine call
-            self.samples += self.arg.chunk
-    
-            
+            note.index += self.inc  # increments current endpoint for call
+            note.samples += self.arg.chunk
+
         else:
-            
-            print(self.relidx)
-            if self.samples > 0 and self.relidx >= 0:
-                if self.relswitch is False:
-                    self.relswitch = True
-                wave = self.compute_wave()
-                wave = self.asdr.apply_release(wave, self.relidx)
+
+            # print(f"Note: {note.key} -> Relidx: {note.relidx}")
+            if note.samples > 0 and note.relidx >= 0:
+                note.active = True
+                if note.relswitch is False:
+                    note.relswitch = True
+                wave = self.compute_wave(note)
+                wave = self.asdr.apply_release(wave, note.relidx)
                 wave = wave.astype(np.float32)  # converts back to f32 from f64
-                self.relidx -= self.arg.chunk
-                self.samples += self.arg.chunk
-                self.index += self.inc
-                
+                note.relidx -= self.arg.chunk
+                note.samples += self.arg.chunk
+                note.index += self.inc
+
             else:
-                if self.relswitch is True:
-                    wave = self.round()
-                self.relswitch = False
-                self.index = 0  # starts calc back over for sine
-                self.samples = 0
-                self.relidx = self.asdr.release
-                self.asdr.level = 1.0
+                if note.relswitch is True:
+                    wave = self.round(note)
+                note.active = False
+                note.relswitch = False
+                note.index = 0  # starts calc back over for sine
+                note.samples = 0
+                note.relidx = self.asdr.release
+                note.level = 1.0
+                note.declevel = 1.0
             # sends chunks of silence to play call, sending silence to sounddevice
                 wave = np.zeros(self.arg.chunk).astype(np.float32)
 
@@ -72,40 +68,62 @@ class SoundModule:
         amp = math.pow(10, exp)
         return amp
 
-    def compute_wave(self):
-        f = 440 * 2 ** ((self.current_note[0] - 69) / 12) 
-        t = np.linspace(self.index, self.index + self.inc, self.arg.chunk, False)
+    # Computes waveform for a buffer chunk
+    def compute_wave(self, note):
+        f = 440 * 2 ** ((note.key - 69) / 12)
+        t = np.linspace(note.index, note.index +
+                        self.inc, self.arg.chunk, False)
         if self.wavetype == 'square':
             wave = self.square(t, f)
         elif self.wavetype == 'sine':
             wave = self.sine(t, f)
-        elif self.wavetype == 'tri':
-            wave = self.triangle(t, f)
-        
-        if self.relswitch is True:
+        # elif self.wavetype == 'tri':
+        #     wave = self.triangle(t, f)
+
+        if note.relswitch is True:
             wave *= self.getAmp(self.arg.volume)
-            wave *= self.asdr.level
+            wave *= note.level
         else:
             wave *= self.getAmp(self.arg.volume)
 
         return wave
-    
-    def round(self):
-        wave = self.compute_wave()
+
+    # This function was begun as a way to smooth out a note if the release was still
+    # in the middle of operation.  I think to be truly effective, it may need to
+    # run for a larger chunk
+    def round(self, note):
+        wave = self.compute_wave(note)
         length = len(wave)
         for index, _ in enumerate(wave):
             wave[index] *= self.getAmp(10 * ((length - index) / length))
+            wave *= note.level
         wave = wave.astype(np.float32)
 
         return wave
 
-    
+    # sine calc
     def sine(self, t, f):
         return np.sin(f * t * 2 * np.pi)
 
-
+    # square calc
     def square(self, t, f):
-        return 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1  # float calculation
-        
-    def triangle(self, t, f):
-        return 2 * np.abs(2 * (t/f) - np.floor((t/f) + 0.5)) - 1
+        # float calculation
+        return 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1
+
+    # attempted triangle, TODO ->  add tri and saw later
+    # def triangle(self, t, f):
+    #     return 2 * np.abs(2 * (t/f) - np.floor((t/f) + 0.5)) - 1
+
+# Note class to keep track of state of each midi note
+class Note:
+    def __init__(self, k, arg) -> None:
+        self.state = False
+        self.holdstate = False
+        self.key = k
+        self.index = 0
+        self.samples = 0
+        self.declevel = 1.0
+        self.relidx = arg.release * 48000
+        self.relswitch = False
+        self.level = 1.0
+        self.active = False

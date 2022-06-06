@@ -1,7 +1,5 @@
-# from xml.sax import parseString
 from effects import Toaster
-from sound_module import SoundModule
-from adsr import ADSR
+from sound_module import SoundModule, Note
 import sounddevice as sd
 import numpy as np
 import mido
@@ -16,44 +14,84 @@ class Synth:
         self.arg = arg
         self.volume = arg.volume
         self.fs = 48000
-        self.midi_interface = MidiInterface(self.process_midi)
+        self.midi_interface = MidiInterface(self.process_midi, arg)
         self.sound_module = SoundModule(arg)
         self.effect = effect
-        self.note = None
         self.stream = sd.OutputStream(blocksize=arg.chunk, dtype=np.float32)
-        self.id = 0
+        self.notes = [Note(i, arg) for i in range(0, 128)]
 
-    def play(self):
+    def run(self):
         self.stream.start()  # start sounddevice stream
         try:
             while True:
                 # write to stream
-                self.stream.write(self.sound_module.play(self.note))
+                self.stream.write(self.poly())
 
         except KeyboardInterrupt:
             self.stream.stop()
             self.stream.close()
 
+    # function sums all notes currently still sending samples
+    def poly(self):
+        poly = np.zeros(self.arg.chunk).astype(np.float32)
+        active = sum(map(lambda x: x.state != False, self.notes))
+        # print(active)
+
+        for note in self.notes:
+            poly += self.sound_module.play(note)
+        if active:
+            for sample in poly:
+                sample /= active
+        return poly
+
+    # mido callback function sends control changes from sustain
+    # to change state of notes
+    # also takes in new notes and updates state of note key on and off changes
     def process_midi(self, message):
-        self.id += 1
         msg = message
-        if msg.type == "note_on":
-            # print(f"start")
-            self.note = (msg.note, self.id)
-        elif msg.type == "note_off":
-            if self.note:
-                if msg.note == self.note[0]:
-                    self.note = None
-                    # print(f"stop")
+        if msg.is_cc():
+            if msg.control == 64:
+                if msg.value == 127:
+                    self.sound_module.hold = True
+                    for note in self.notes:
+                        if note.state:
+                            note.holdstate = True
+                elif msg.value == 0:
+                    self.sound_module.hold = False
+                    for note in self.notes:
+                        if not note.state:
+                            note.holdstate = False
+        else:
+            if msg.type == "note_on":
+                self.notes[msg.note].state = True
+                if self.sound_module.hold:
+                    self.notes[msg.note].holdstate = True
+            elif msg.type == "note_off":
+                self.notes[msg.note].state = False
 
-# moved midi_interface.py stuff here to consolidate
-# - we can add functionality as needed
+# Class that creates midi interface connection
+# also at command line can decide to list ports, 
+# or there is an option to simply connect to the port
+# if you already know it 
 class MidiInterface:
-    def __init__(self, callback) -> None:
 
-        # comment this out to change back to default
-        self.inport = mido.open_input(
-            'Rev2:Rev2 MIDI 1 36:0', callback=callback)
+    def __init__(self, callback, arg) -> None:
+        self.ports = mido.get_output_names()
+        self.portlist = arg.portlist
 
-        # uncomment this to change back to default
-        # self.inport = mido.open_input(callback=callback)
+        if self.portlist:
+            print("MIDI Port Listing")
+            for (i, port) in enumerate(self.ports):
+                print(f"{i}: {port}")
+            print()
+            print("Please enter port number: ")
+            port = input("Please enter a port number: ")
+            port = int(port)
+            if port < 0 or port > len(self.ports) - 1:
+                print("Error: No port exists")
+                exit()
+            self.inport = mido.open_input(
+                self.ports[port], callback=callback)
+        else:
+            self.inport = mido.open_input(
+                self.ports[arg.port], callback=callback)

@@ -41,6 +41,8 @@ In addition to the above, windows users will need a midi loopback tool in order 
 
 loopMidi: https://www.tobias-erichsen.de/software/loopmidi.html
 
+Also, you need to specify the --port arg to be 99 when using loopMidi on windows.
+
 
 To run the program, in the same directory, type the following in the terminal:
 

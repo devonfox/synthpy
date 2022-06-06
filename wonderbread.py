@@ -21,6 +21,8 @@ parser.add_argument('--wave', dest='wave', type=str, default='square',
                     help='synth waveform module (default: square)')
 parser.add_argument('--port', dest='port', type=int, default=0,
                     help='select midi port (default: 0)')
+parser.add_argument('--portlist', dest='portlist', type=bool, default=False,
+                    help='list ports and select from list (default: False)')
 # parser.add_argument('--voice', dest='voice', type=int, default=8,
 #                     help='voice count (default: 8)')
 
@@ -33,9 +35,11 @@ if arg.wave not in modules:
     print('Incorrect waveform type entered. see argument (--wave)')
     exit()
 
+
 def main():
     synth = Synth(arg)
     synth.run()
+
 
 if __name__ == "__main__":
     main()

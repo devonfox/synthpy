@@ -88,8 +88,8 @@ class SoundModule:
 
         return wave
 
-    # This function was begun as a way to smooth out a note if the release was still 
-    # in the middle of operation.  I think to be truly effective, it may need to 
+    # This function was begun as a way to smooth out a note if the release was still
+    # in the middle of operation.  I think to be truly effective, it may need to
     # run for a larger chunk
     def round(self, note):
         wave = self.compute_wave(note)
@@ -101,17 +101,20 @@ class SoundModule:
 
         return wave
 
+    # sine calc
     def sine(self, t, f):
         return np.sin(f * t * 2 * np.pi)
 
+    # square calc
     def square(self, t, f):
         # float calculation
         return 4 * np.floor(f * t) - 2 * np.floor(2*f * t) + 1
 
+    # attempted triangle, TODO ->  add tri and saw later
     # def triangle(self, t, f):
     #     return 2 * np.abs(2 * (t/f) - np.floor((t/f) + 0.5)) - 1
 
-
+# Note class to keep track of state of each midi note
 class Note:
     def __init__(self, k, arg) -> None:
         self.state = False

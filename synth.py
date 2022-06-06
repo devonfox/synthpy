@@ -1,4 +1,3 @@
-# from xml.sax import parseString
 from effects import Toaster
 from sound_module import SoundModule, Note
 import sounddevice as sd
@@ -32,6 +31,7 @@ class Synth:
             self.stream.stop()
             self.stream.close()
 
+    # function sums all notes currently still sending samples
     def poly(self):
         poly = np.zeros(self.arg.chunk).astype(np.float32)
         active = sum(map(lambda x: x.state != False, self.notes))
@@ -44,6 +44,9 @@ class Synth:
                 sample /= active
         return poly
 
+    # mido callback function sends control changes from sustain
+    # to change state of notes
+    # also takes in new notes and updates state of note key on and off changes
     def process_midi(self, message):
         msg = message
         if msg.is_cc():
@@ -61,13 +64,34 @@ class Synth:
         else:
             if msg.type == "note_on":
                 self.notes[msg.note].state = True
+                if self.sound_module.hold:
+                    self.notes[msg.note].holdstate = True
             elif msg.type == "note_off":
                 self.notes[msg.note].state = False
 
+# Class that creates midi interface connection
+# also at command line can decide to list ports, 
+# or there is an option to simply connect to the port
+# if you already know it 
 class MidiInterface:
-    
+
     def __init__(self, callback, arg) -> None:
         self.ports = mido.get_output_names()
-        self.inport = mido.open_input(
-            self.ports[arg.port], callback=callback)
+        self.portlist = arg.portlist
 
+        if self.portlist:
+            print("MIDI Port Listing")
+            for (i, port) in enumerate(self.ports):
+                print(f"{i}: {port}")
+            print()
+            print("Please enter port number: ")
+            port = input("Please enter a port number: ")
+            port = int(port)
+            if port < 0 or port > len(self.ports) - 1:
+                print("Error: No port exists")
+                exit()
+            self.inport = mido.open_input(
+                self.ports[port], callback=callback)
+        else:
+            self.inport = mido.open_input(
+                self.ports[arg.port], callback=callback)

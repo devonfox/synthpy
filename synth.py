@@ -93,6 +93,9 @@ class MidiInterface:
             self.inport = mido.open_input(
                 self.ports[port], callback=callback)
         else:
-            self.inport = mido.open_input(callback=callback)
-            # self.inport = mido.open_input(
-            #     self.ports[arg.port], callback=callback)
+            # for windows, since port recognition is wonky
+            if arg.port == 99:
+                self.inport = mido.open_input(callback=callback)
+            else:
+                self.inport = mido.open_input(
+                self.ports[arg.port], callback=callback)

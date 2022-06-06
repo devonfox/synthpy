@@ -63,6 +63,9 @@ Ex. `--release 0.25`
 Ex. `--port 0`
 * select which midi port to receive from (Default: 0)
 
+Ex. `--portlist False`
+* list all available midi ports, and select which one to connect to at startup - port can be used instead if you already know portnumber or want to startup headlessly (Default: False)
+
 *to note: sustain will be held if using a sustain pedal via midi*
 
 ### What Went Down

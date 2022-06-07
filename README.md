@@ -35,7 +35,7 @@ Make sure the latest version of Python is installed.
 `pip install python-rtmidi`
 
 
-### Winodws Build Instructions
+### Windows Build Instructions
 
 In addition to the above, windows users will need a midi loopback tool in order to connect a midi keyboard to the synth. The one provided below works well and is free:
 
